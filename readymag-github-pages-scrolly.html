@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Readymag Scrolly</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      background: #111;
+    }
+
+    .scrolly {
+      position: relative;
+      min-height: 320vh;
+      background: #111;
+    }
+
+    .sticky-bg {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      background: #111;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url("https://cdn.jsdelivr.net/gh/xiaoye245/readymag@main/manhua1.png");
+      background-size: cover;
+      background-position: center;
+      opacity: 1;
+      transform: scale(1);
+      transition: opacity 450ms ease, transform 900ms ease;
+    }
+
+    .sticky-bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.42),
+        rgba(0, 0, 0, 0.08) 50%,
+        rgba(0, 0, 0, 0.32)
+      );
+      pointer-events: none;
+    }
+
+    .steps {
+      position: relative;
+      z-index: 3;
+      margin-top: -100vh;
+      padding: 60vh 0 45vh;
+    }
+
+    .step {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0 6vw;
+      box-sizing: border-box;
+    }
+
+    .caption {
+      width: min(430px, calc(100vw - 40px));
+      margin: 0;
+      padding: 22px 24px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.94);
+      color: #111;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+      font-size: clamp(18px, 2.2vw, 24px);
+      line-height: 1.42;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 700px) {
+      .step {
+        justify-content: center;
+        padding: 0 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="scrolly">
+    <div class="sticky-bg">
+      <div class="bg-layer" id="bgLayer"></div>
+    </div>
+
+    <div class="steps">
+      <section class="step" data-image="https://cdn.jsdelivr.net/gh/xiaoye245/readymag@main/manhua1.png">
+        <p class="caption">李大爷接到一通电话</p>
+      </section>
+
+      <section class="step" data-image="https://cdn.jsdelivr.net/gh/xiaoye245/readymag@main/manhua2.png">
+        <p class="caption">电话那头，是一个像极了孙子的声音</p>
+      </section>
+
+      <section class="step" data-image="https://cdn.jsdelivr.net/gh/xiaoye245/readymag@main/manhua3.png">
+        <p class="caption">这不只是李大爷一个人的风险</p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    var bgLayer = document.getElementById("bgLayer");
+    var steps = Array.prototype.slice.call(document.querySelectorAll(".step"));
+    var activeImage = "https://cdn.jsdelivr.net/gh/xiaoye245/readymag@main/manhua1.png";
+
+    function setBackground(step) {
+      var image = step.getAttribute("data-image");
+      if (!image || image === activeImage || !bgLayer) return;
+
+      activeImage = image;
+      bgLayer.style.opacity = "0";
+
+      window.setTimeout(function () {
+        bgLayer.style.backgroundImage = "url('" + image + "')";
+        bgLayer.style.transform = "scale(1.02)";
+
+        window.setTimeout(function () {
+          bgLayer.style.opacity = "1";
+          bgLayer.style.transform = "scale(1)";
+        }, 60);
+      }, 180);
+    }
+
+    if ("IntersectionObserver" in window) {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) setBackground(entry.target);
+        });
+      }, { threshold: 0.55 });
+
+      steps.forEach(function (step) {
+        observer.observe(step);
+      });
+    }
+  </script>
+</body>
+</html>
