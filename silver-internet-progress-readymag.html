@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2025年6月，我国60岁及以上银发网民规模与互联网普及率</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --text: rgba(245, 247, 250, 0.94);
+      --muted: rgba(224, 229, 237, 0.72);
+      --faint: rgba(224, 229, 237, 0.34);
+      --track: rgba(224, 229, 237, 0.18);
+      --fill: #7fd0dc;
+      --fill-strong: #9de4eb;
+      --tooltip-bg: rgba(18, 22, 30, 0.94);
+      --tooltip-border: rgba(245, 247, 250, 0.18);
+      font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .chart-shell {
+      position: relative;
+      width: 100%;
+      height: min(420px, 100vh);
+      min-height: 340px;
+      background: transparent;
+      color: var(--text);
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      background: transparent;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .title {
+      fill: var(--text);
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .label {
+      fill: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .value {
+      fill: var(--text);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .percent {
+      fill: var(--fill-strong);
+      font-size: 30px;
+      font-weight: 800;
+    }
+
+    .scale {
+      fill: var(--faint);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .track {
+      fill: var(--track);
+    }
+
+    .fill {
+      fill: var(--fill);
+      cursor: crosshair;
+      transition: fill 160ms ease, opacity 160ms ease;
+    }
+
+    .fill:hover {
+      fill: var(--fill-strong);
+    }
+
+    .divider {
+      stroke: rgba(245, 247, 250, 0.72);
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .source {
+      fill: rgba(224, 229, 237, 0.66);
+      font-size: 12px;
+    }
+
+    .tooltip {
+      position: absolute;
+      z-index: 3;
+      min-width: 218px;
+      padding: 10px 12px;
+      border: 1px solid var(--tooltip-border);
+      border-radius: 6px;
+      background: var(--tooltip-bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.65;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, calc(-100% - 14px));
+      transition: opacity 120ms ease;
+      white-space: nowrap;
+    }
+
+    .tooltip.is-visible {
+      opacity: 1;
+    }
+
+    .tooltip strong {
+      font-weight: 700;
+    }
+
+    @media (max-width: 720px) {
+      .chart-shell {
+        min-height: 360px;
+      }
+
+      .title {
+        font-size: 18px;
+      }
+
+      .label {
+        font-size: 12px;
+      }
+
+      .value {
+        font-size: 17px;
+      }
+
+      .percent {
+        font-size: 24px;
+      }
+
+      .source {
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chart-shell" id="chartShell" aria-label="2025年6月，我国60岁及以上银发网民规模与互联网普及率">
+    <svg id="chart" role="img" aria-labelledby="chartTitle chartDesc"></svg>
+    <div class="tooltip" id="tooltip" aria-hidden="true"></div>
+  </div>
+
+  <script>
+    const chartData = {
+      time: "2025年6月",
+      group: "60岁及以上银发网民",
+      scale: "1.61亿人",
+      rate: 52.0
+    };
+
+    const shell = document.getElementById("chartShell");
+    const svg = document.getElementById("chart");
+    const tooltip = document.getElementById("tooltip");
+    const ns = "http://www.w3.org/2000/svg";
+
+    function el(tag, attrs = {}, parent = svg) {
+      const node = document.createElementNS(ns, tag);
+      for (const [key, value] of Object.entries(attrs)) {
+        if (key === "text") node.textContent = value;
+        else node.setAttribute(key, value);
+      }
+      parent.appendChild(node);
+      return node;
+    }
+
+    function draw() {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+      const width = Math.max(shell.clientWidth, 320);
+      const height = Math.max(shell.clientHeight, 340);
+      const compact = width < 720;
+      const margin = compact
+        ? { top: 64, right: 28, bottom: 74, left: 28 }
+        : { top: 78, right: 72, bottom: 76, left: 72 };
+      const barX = margin.left;
+      const barW = width - margin.left - margin.right;
+      const barH = compact ? 34 : 42;
+      const barY = compact ? 160 : 176;
+      const radius = barH / 2;
+      const fillW = barW * chartData.rate / 100;
+      const fillEnd = barX + fillW;
+
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.setAttribute("width", width);
+      svg.setAttribute("height", height);
+
+      el("title", { id: "chartTitle", text: "2025年6月，我国60岁及以上银发网民规模与互联网普及率" });
+      el("desc", { id: "chartDesc", text: "横向比例条显示老年群体互联网普及率为52.0%，60岁及以上银发网民规模为1.61亿人。" });
+
+      el("text", {
+        class: "title",
+        x: margin.left,
+        y: compact ? 34 : 42,
+        text: "2025年6月，我国60岁及以上银发网民规模与互联网普及率"
+      });
+
+      el("text", {
+        class: "label",
+        x: barX,
+        y: barY - 46,
+        text: "老年群体互联网普及率"
+      });
+      el("text", {
+        class: "percent",
+        x: fillEnd,
+        y: barY - 48,
+        "text-anchor": fillEnd > width - margin.right - 56 ? "end" : "middle",
+        text: `${chartData.rate.toFixed(1)}%`
+      });
+
+      el("rect", {
+        class: "track",
+        x: barX,
+        y: barY,
+        width: barW,
+        height: barH,
+        rx: radius
+      });
+
+      const clip = el("clipPath", { id: "progressClip" }, el("defs"));
+      el("rect", { x: barX, y: barY, width: barW, height: barH, rx: radius }, clip);
+
+      const fill = el("rect", {
+        class: "fill",
+        x: barX,
+        y: barY,
+        width: fillW,
+        height: barH,
+        rx: radius,
+        "clip-path": "url(#progressClip)",
+        tabindex: "0",
+        role: "img",
+        "aria-label": "60岁及以上银发网民规模1.61亿人，互联网普及率52.0%，时间2025年6月"
+      });
+
+      el("line", {
+        class: "divider",
+        x1: fillEnd,
+        y1: barY + 6,
+        x2: fillEnd,
+        y2: barY + barH - 6
+      });
+
+      el("text", { class: "scale", x: barX, y: barY + barH + 26, text: "已接入互联网 52.0%" });
+      el("text", {
+        class: "scale",
+        x: barX + barW,
+        y: barY + barH + 26,
+        "text-anchor": "end",
+        text: "未接入互联网 48.0%"
+      });
+
+      const infoY = compact ? barY + 92 : barY + 104;
+      el("text", { class: "value", x: barX, y: infoY, text: chartData.scale });
+      el("text", {
+        class: "label",
+        x: compact ? barX : barX + 96,
+        y: compact ? infoY + 24 : infoY,
+        text: "60岁及以上银发网民规模"
+      });
+
+      const sourceText = "数据来源：中国互联网络信息中心第56次《中国互联网络发展状况统计报告》。";
+      el("text", {
+        class: "source",
+        x: margin.left,
+        y: height - 34,
+        text: sourceText
+      });
+
+      function showTooltip() {
+        tooltip.innerHTML =
+          `<strong>${chartData.group}</strong><br>` +
+          `规模：${chartData.scale}<br>` +
+          `互联网普及率：${chartData.rate.toFixed(1)}%<br>` +
+          `时间：${chartData.time}`;
+        tooltip.classList.add("is-visible");
+        tooltip.setAttribute("aria-hidden", "false");
+        const tipW = tooltip.offsetWidth || 240;
+        const left = Math.min(Math.max(barX + fillW / 2, tipW / 2 + 8), shell.clientWidth - tipW / 2 - 8);
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${barY - 10}px`;
+      }
+
+      function hideTooltip() {
+        tooltip.classList.remove("is-visible");
+        tooltip.setAttribute("aria-hidden", "true");
+      }
+
+      fill.addEventListener("pointerenter", showTooltip);
+      fill.addEventListener("pointermove", showTooltip);
+      fill.addEventListener("pointerleave", hideTooltip);
+      fill.addEventListener("focus", showTooltip);
+      fill.addEventListener("blur", hideTooltip);
+    }
+
+    const resizeObserver = new ResizeObserver(draw);
+    resizeObserver.observe(shell);
+    draw();
+  </script>
+</body>
+</html>
