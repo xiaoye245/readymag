@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2013—2025年我国60周岁及以上人口数量及占比</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --text: rgba(245, 247, 250, 0.94);
+      --muted: rgba(224, 229, 237, 0.72);
+      --axis: rgba(224, 229, 237, 0.52);
+      --grid: rgba(224, 229, 237, 0.14);
+      --bar: #6f8fc6;
+      --bar-highlight: #7fd0dc;
+      --line: #f0c95a;
+      --tooltip-bg: rgba(18, 22, 30, 0.94);
+      --tooltip-border: rgba(245, 247, 250, 0.18);
+      font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    body {
+      color: var(--text);
+    }
+
+    .chart-shell {
+      position: relative;
+      width: 100%;
+      height: min(620px, 100vh);
+      min-height: 520px;
+      background: transparent;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      background: transparent;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .title {
+      fill: var(--text);
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .legend,
+    .axis-label {
+      fill: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .tick {
+      fill: var(--muted);
+      font-size: 12px;
+    }
+
+    .grid-line {
+      stroke: var(--grid);
+      stroke-width: 1;
+      shape-rendering: crispEdges;
+    }
+
+    .axis-line {
+      stroke: var(--axis);
+      stroke-width: 1;
+      shape-rendering: crispEdges;
+    }
+
+    .bar {
+      fill: var(--bar);
+      opacity: 0.78;
+      transition: opacity 160ms ease, fill 160ms ease;
+    }
+
+    .bar.is-highlight {
+      fill: var(--bar-highlight);
+      opacity: 0.92;
+    }
+
+    .line-path {
+      fill: none;
+      stroke: var(--line);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .dot {
+      fill: #1b2029;
+      stroke: var(--line);
+      stroke-width: 2.5;
+      transition: r 160ms ease, fill 160ms ease;
+    }
+
+    .dot.is-highlight {
+      fill: var(--line);
+      r: 5.4;
+    }
+
+    .hit-zone {
+      fill: transparent;
+      cursor: crosshair;
+    }
+
+    .focus-line {
+      stroke: rgba(245, 247, 250, 0.32);
+      stroke-width: 1;
+      stroke-dasharray: 4 4;
+      pointer-events: none;
+    }
+
+    .source {
+      fill: rgba(224, 229, 237, 0.66);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .tooltip {
+      position: absolute;
+      z-index: 3;
+      min-width: 218px;
+      padding: 10px 12px;
+      border: 1px solid var(--tooltip-border);
+      border-radius: 6px;
+      background: var(--tooltip-bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.65;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, calc(-100% - 14px));
+      transition: opacity 120ms ease;
+      white-space: nowrap;
+    }
+
+    .tooltip.is-visible {
+      opacity: 1;
+    }
+
+    .tooltip strong {
+      font-weight: 700;
+    }
+
+    @media (max-width: 720px) {
+      .chart-shell {
+        min-height: 540px;
+      }
+
+      .title {
+        font-size: 18px;
+      }
+
+      .legend,
+      .axis-label,
+      .tick {
+        font-size: 11px;
+      }
+
+      .source {
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chart-shell" id="chartShell" aria-label="2013—2025年我国60周岁及以上人口数量及占比双轴组合图">
+    <svg id="chart" role="img" aria-labelledby="chartTitle chartDesc"></svg>
+    <div class="tooltip" id="tooltip" aria-hidden="true"></div>
+  </div>
+
+  <script>
+    const data = [
+      { year: 2013, population: 20243, share: 14.9 },
+      { year: 2014, population: 21242, share: 15.5 },
+      { year: 2015, population: 22200, share: 16.1 },
+      { year: 2016, population: 23086, share: 16.7 },
+      { year: 2017, population: 24090, share: 17.3 },
+      { year: 2018, population: 24949, share: 17.9 },
+      { year: 2019, population: 25388, share: 18.1 },
+      { year: 2020, population: 26402, share: 18.7 },
+      { year: 2021, population: 26736, share: 18.9 },
+      { year: 2022, population: 28004, share: 19.8 },
+      { year: 2023, population: 29697, share: 21.1 },
+      { year: 2024, population: 31031, share: 22.0 },
+      { year: 2025, population: 32338, share: 23.0 }
+    ];
+
+    const shell = document.getElementById("chartShell");
+    const svg = document.getElementById("chart");
+    const tooltip = document.getElementById("tooltip");
+    const ns = "http://www.w3.org/2000/svg";
+
+    function el(tag, attrs = {}, parent = svg) {
+      const node = document.createElementNS(ns, tag);
+      for (const [key, value] of Object.entries(attrs)) {
+        if (key === "text") node.textContent = value;
+        else node.setAttribute(key, value);
+      }
+      parent.appendChild(node);
+      return node;
+    }
+
+    function clear() {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+    }
+
+    function draw() {
+      clear();
+      const width = Math.max(shell.clientWidth, 320);
+      const height = Math.max(shell.clientHeight, 520);
+      const compact = width < 720;
+      const margin = compact
+        ? { top: 82, right: 48, bottom: 118, left: 56 }
+        : { top: 104, right: 78, bottom: 112, left: 82 };
+      const plotW = width - margin.left - margin.right;
+      const plotH = height - margin.top - margin.bottom;
+      const leftMax = 35000;
+      const rightMax = 25;
+      const leftTicks = [0, 5000, 10000, 15000, 20000, 25000, 30000, 35000];
+      const rightTicks = [0, 5, 10, 15, 20, 25];
+      const step = plotW / data.length;
+      const barW = Math.max(10, Math.min(34, step * 0.56));
+      const xCenter = (i) => margin.left + step * i + step / 2;
+      const yPop = (value) => margin.top + plotH - (value / leftMax) * plotH;
+      const yShare = (value) => margin.top + plotH - (value / rightMax) * plotH;
+      const baseline = margin.top + plotH;
+
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.setAttribute("width", width);
+      svg.setAttribute("height", height);
+
+      el("title", { id: "chartTitle", text: "2013—2025年我国60周岁及以上人口数量及占比" });
+      el("desc", { id: "chartDesc", text: "柱状图表示60周岁及以上人口数量，折线图表示占全国人口比重。" });
+
+      el("text", {
+        class: "title",
+        x: margin.left,
+        y: compact ? 34 : 42,
+        text: "2013—2025年我国60周岁及以上人口数量及占比"
+      });
+
+      const legendY = compact ? 60 : 72;
+      el("rect", { x: margin.left, y: legendY - 10, width: 22, height: 9, rx: 2, class: "bar" });
+      el("text", { class: "legend", x: margin.left + 30, y: legendY, text: "60周岁及以上人口数量（万人）" });
+      const lineLegendX = compact ? margin.left : margin.left + 250;
+      const lineLegendY = compact ? legendY + 22 : legendY;
+      el("line", { x1: lineLegendX, y1: lineLegendY - 4, x2: lineLegendX + 24, y2: lineLegendY - 4, class: "line-path" });
+      el("circle", { cx: lineLegendX + 12, cy: lineLegendY - 4, r: 4, class: "dot" });
+      el("text", { class: "legend", x: lineLegendX + 32, y: lineLegendY, text: "占全国人口比重（%）" });
+
+      leftTicks.forEach((tick) => {
+        const y = yPop(tick);
+        el("line", { x1: margin.left, y1: y, x2: width - margin.right, y2: y, class: "grid-line" });
+        el("text", { class: "tick", x: margin.left - 12, y: y + 4, "text-anchor": "end", text: String(tick) });
+      });
+
+      rightTicks.forEach((tick) => {
+        const y = yShare(tick);
+        el("text", { class: "tick", x: width - margin.right + 12, y: y + 4, text: String(tick) });
+      });
+
+      el("line", { x1: margin.left, y1: margin.top, x2: margin.left, y2: baseline, class: "axis-line" });
+      el("line", { x1: width - margin.right, y1: margin.top, x2: width - margin.right, y2: baseline, class: "axis-line" });
+      el("line", { x1: margin.left, y1: baseline, x2: width - margin.right, y2: baseline, class: "axis-line" });
+      el("text", { class: "axis-label", x: margin.left, y: margin.top - 16, text: "60周岁及以上人口数量（万人）" });
+      el("text", { class: "axis-label", x: width - margin.right, y: margin.top - 16, "text-anchor": "end", text: "占全国人口比重（%）" });
+
+      data.forEach((d, i) => {
+        const x = xCenter(i);
+        const y = yPop(d.population);
+        el("rect", {
+          class: d.year === 2025 ? "bar is-highlight" : "bar",
+          x: x - barW / 2,
+          y,
+          width: barW,
+          height: baseline - y,
+          rx: 2
+        });
+        el("text", {
+          class: "tick",
+          x,
+          y: baseline + 25,
+          "text-anchor": "middle",
+          text: String(d.year)
+        });
+      });
+
+      const points = data.map((d, i) => [xCenter(i), yShare(d.share)]);
+      const path = points.map((point, i) => `${i === 0 ? "M" : "L"} ${point[0]} ${point[1]}`).join(" ");
+      el("path", { d: path, class: "line-path" });
+      points.forEach(([x, y], i) => {
+        el("circle", { class: data[i].year === 2025 ? "dot is-highlight" : "dot", cx: x, cy: y, r: data[i].year === 2025 ? 5.4 : 4.4 });
+      });
+
+      let focus = null;
+      function hideTooltip() {
+        tooltip.classList.remove("is-visible");
+        tooltip.setAttribute("aria-hidden", "true");
+        if (focus) {
+          focus.remove();
+          focus = null;
+        }
+      }
+
+      function showTooltip(d, x, y) {
+        if (focus) focus.remove();
+        focus = el("line", { x1: x, y1: margin.top, x2: x, y2: baseline, class: "focus-line" });
+        tooltip.innerHTML =
+          `<strong>年份：${d.year}</strong><br>` +
+          `60周岁及以上人口：${d.population}万人<br>` +
+          `占全国人口比重：${d.share.toFixed(1)}%`;
+        tooltip.classList.add("is-visible");
+        tooltip.setAttribute("aria-hidden", "false");
+        const shellRect = shell.getBoundingClientRect();
+        const tipW = tooltip.offsetWidth || 240;
+        const left = Math.min(Math.max(x, tipW / 2 + 8), shellRect.width - tipW / 2 - 8);
+        const top = Math.max(y - 10, margin.top + 52);
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+      }
+
+      data.forEach((d, i) => {
+        const x = xCenter(i);
+        el("rect", {
+          class: "hit-zone",
+          x: margin.left + step * i,
+          y: margin.top,
+          width: step,
+          height: plotH,
+          tabindex: "0",
+          role: "img",
+          "aria-label": `${d.year}年，60周岁及以上人口${d.population}万人，占全国人口比重${d.share.toFixed(1)}%`
+        }).addEventListener("pointerenter", () => showTooltip(d, x, Math.min(yPop(d.population), yShare(d.share))));
+      });
+
+      svg.querySelectorAll(".hit-zone").forEach((zone, i) => {
+        zone.addEventListener("pointermove", () => {
+          const d = data[i];
+          showTooltip(d, xCenter(i), Math.min(yPop(d.population), yShare(d.share)));
+        });
+        zone.addEventListener("focus", () => {
+          const d = data[i];
+          showTooltip(d, xCenter(i), Math.min(yPop(d.population), yShare(d.share)));
+        });
+        zone.addEventListener("pointerleave", hideTooltip);
+        zone.addEventListener("blur", hideTooltip);
+      });
+
+      const sourceText = "数据来源：国家统计局历年《国民经济和社会发展统计公报》；2020年数据来自第七次全国人口普查公报。注：2020年为普查时点数据，其余年份为年末数据。";
+      const source = el("text", { class: "source", x: margin.left, y: height - 48 });
+      const sourceMax = width - margin.left - margin.right;
+      const chunks = compact
+        ? ["数据来源：国家统计局历年《国民经济和社会发展统计公报》；2020年数据来自第七次全国人口普查公报。", "注：2020年为普查时点数据，其余年份为年末数据。"]
+        : [sourceText];
+      chunks.forEach((line, i) => {
+        const tspan = document.createElementNS(ns, "tspan");
+        tspan.setAttribute("x", margin.left);
+        tspan.setAttribute("dy", i === 0 ? 0 : 18);
+        tspan.textContent = line;
+        source.appendChild(tspan);
+      });
+    }
+
+    const resizeObserver = new ResizeObserver(draw);
+    resizeObserver.observe(shell);
+    draw();
+  </script>
+</body>
+</html>
